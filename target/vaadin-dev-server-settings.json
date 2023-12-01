@@ -1,0 +1,17 @@
+{
+  "frontendFolder": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/./frontend",
+  "themeFolder": "themes",
+  "themeResourceFolder": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/./frontend/generated/jar-resources",
+  "staticOutput": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/target/classes/META-INF/VAADIN/webapp/VAADIN/static",
+  "generatedFolder": "generated",
+  "statsOutput": "D:\\งาน bu\\ปี 2 เทอม1\\cs318\\BU_GPT\\target\\classes\\META-INF\\VAADIN\\config",
+  "frontendBundleOutput": "D:\\งาน bu\\ปี 2 เทอม1\\cs318\\BU_GPT\\target\\classes\\META-INF\\VAADIN\\webapp",
+  "devBundleOutput": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/src/main/dev-bundle/webapp",
+  "devBundleStatsOutput": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/src/main/dev-bundle/config",
+  "jarResourcesFolder": "D:/งาน bu/ปี 2 เทอม1/cs318/BU_GPT/./frontend/generated/jar-resources",
+  "themeName": "gtpchatapp",
+  "clientServiceWorkerSource": "D:\\งาน bu\\ปี 2 เทอม1\\cs318\\BU_GPT\\target\\sw.ts",
+  "pwaEnabled": false,
+  "offlineEnabled": false,
+  "offlinePath": "'offline.html'"
+}
