@@ -36,8 +36,15 @@ public class UserService {
     }
 
     public User getCurrentUser() {
-        return (User) VaadinService.getCurrentRequest().getWrappedSession().getAttribute("user");
+        User currentUser = (User) VaadinService.getCurrentRequest().getWrappedSession().getAttribute("user");
+        if (currentUser != null) {
+            System.out.println("Current user username: " + currentUser.getUsername()); // Log สำหรับตรวจสอบ
+        } else {
+            System.out.println("No user is currently logged in."); // Log สำหรับตรวจสอบ
+        }
+        return currentUser;
     }
+
 
     public void setCurrentUser(User user) {
         VaadinService.getCurrentRequest().getWrappedSession().setAttribute("user", user);

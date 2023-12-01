@@ -5,6 +5,7 @@ import com.example.application.model.ChatHistory;
 import com.example.application.model.User;
 import com.example.application.service.ChatHistoryService;
 import com.example.application.service.UserService;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -28,6 +29,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -44,6 +46,8 @@ public class ChatView extends AppLayout {
     private final OpenAI openAI;
     private final ChatHistoryService chatHistoryService;
 
+    private Instant lastMessageTimestamp = Instant.MIN;
+
     private final String USER_AVATAR = "https://api.dicebear.com/7.x/lorelei/svg?seed=Jack";
     private final String AI_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bubba&baseColor=039be5&mouth=smile01";
     private final String SYSTEM_AVATAR = "https://api.dicebear.com/6.x/bottts/svg?seed=Sheba";
@@ -57,7 +61,7 @@ public class ChatView extends AppLayout {
         // Setup header and navigation
         H1 title = new H1("BU GPT");
         title.getElement().getStyle().set("margin", "0");
-        RouterLink historyLink = new RouterLink("Chat History", ChatView.class); // assuming this is the same view for history
+        RouterLink historyLink = new RouterLink("Chat History", ChatHistoryView.class); // assuming this is the same view for history
         RouterLink settingsLink = new RouterLink("Settings", SettingsView.class);
         Anchor logoutLink = new Anchor("", "Log out");
 
@@ -127,6 +131,7 @@ public class ChatView extends AppLayout {
     }
 
 
+
     private void saveChatHistory(User currentUser, String userMessage, String aiMessage) {
         ChatHistory userChatHistory = new ChatHistory(currentUser.getUsername(), "BU Assistant", userMessage);
         chatHistoryService.saveChatHistoryAsync(userChatHistory);
@@ -138,8 +143,6 @@ public class ChatView extends AppLayout {
 
 
 
-
-
     private void sendMessage(String messageText) {
         if (messageText != null && !messageText.trim().isEmpty()) {
             // Here you would add the logic to send the message and update the chat list
@@ -147,16 +150,57 @@ public class ChatView extends AppLayout {
     }
 
 
+
+//    @Override
+//    protected void onAttach(AttachEvent attachEvent) {
+//        super.onAttach(attachEvent);
+//        if (chat.getItems().isEmpty()) {
+//            loadUserMessages();
+//        }
+//    }
+//
+//    private void loadUserMessages() {
+//        User currentUser = userService.getCurrentUser();
+//        if (currentUser != null) {
+//            List<ChatHistory> messages = chatHistoryService.getChatHistoryForUser(currentUser.getUsername());
+//            messages.forEach(message -> {
+//                Instant messageInstant = message.getTimestamp().atZone(ZoneId.systemDefault()).toInstant();
+//                String displayName = message.getSenderId().equals(currentUser.getUsername()) ? currentUser.getUsername() : message.getSenderId();
+//                String avatarUrl = displayName.equals(currentUser.getUsername()) ? USER_AVATAR : AI_AVATAR; // Use the AI avatar for messages not sent by the current user
+//                MessageListItem item = new MessageListItem(
+//                        message.getMessage(),
+//                        messageInstant,
+//                        displayName,
+//                        avatarUrl
+//                );
+//                addMessageToList(item);
+//            });
+//        }
+//    }
+
+
+
+    private void addMessageToList(MessageListItem messageItem) {
+        List<MessageListItem> currentItems = new ArrayList<>(chat.getItems());
+        currentItems.add(messageItem);
+        chat.setItems(currentItems);
+    }
+
     private void updateChatWithResponse(List<OpenAI.Message> messages) {
-        // Filter out user messages if needed or handle them accordingly
-        List<MessageListItem> assistantMessages = messages.stream()
-                .filter(msg -> "assistant".equals(msg.getRole())) // or use a different condition if needed
+        List<MessageListItem> newMessages = messages.stream()
+                .filter(msg -> "assistant".equals(msg.getRole()))
+                // Make sure to compare Instants with Instants
+                .filter(msg -> msg.getTime().isAfter(lastMessageTimestamp)) // Only add messages that are newer
                 .map(this::convertMessage)
                 .collect(Collectors.toList());
 
-        List<MessageListItem> items = new ArrayList<>(chat.getItems());
-        items.addAll(assistantMessages);
-        chat.setItems(items);
+        if (!newMessages.isEmpty()) {
+            // Update last message timestamp with the newest message from the response
+            lastMessageTimestamp = newMessages.get(newMessages.size() - 1).getTime();
+            List<MessageListItem> currentItems = new ArrayList<>(chat.getItems());
+            currentItems.addAll(newMessages);
+            chat.setItems(currentItems); // Update the chat with new messages only
+        }
     }
 
 
@@ -168,41 +212,33 @@ public class ChatView extends AppLayout {
         }
     }
 
-    private String getCurrentUserId() {
+
+    private String getCurrentUserDisplayName() {
         User currentUser = userService.getCurrentUser();
-        return currentUser != null ? currentUser.getUsername() : null;
+        return currentUser != null ? currentUser.getUsername() : "User";
     }
-
-
-
 
 
     private MessageListItem convertMessage(OpenAI.Message msg) {
         String displayName;
         String avatarUrl;
 
+
         if ("user".equals(msg.getRole())) {
-            // Set the display name to the current user's username
-            displayName = getCurrentUserDisplayName();
-            avatarUrl = USER_AVATAR;
+            displayName = getCurrentUserDisplayName(); // Use the username of the logged-in user
+            avatarUrl = USER_AVATAR; // Avatar for the user
         } else if ("assistant".equals(msg.getRole())) {
-            // Set the display name to "BU Assistant"
-            displayName = "BU Assistant";
-            avatarUrl = AI_AVATAR;
+            displayName = "BU Assistant"; // Name for the assistant
+            avatarUrl = AI_AVATAR; // Avatar for the assistant
         } else {
-            displayName = "System";
-            avatarUrl = SYSTEM_AVATAR;
+            displayName = "System"; // Default name for system messages
+            avatarUrl = SYSTEM_AVATAR; // Default avatar for system messages
         }
 
         return new MessageListItem(msg.getContent(), msg.getTime(), displayName, avatarUrl);
     }
 
 
-
-    private String getCurrentUserDisplayName() {
-        User currentUser = userService.getCurrentUser();
-        return currentUser != null ? currentUser.getUsername() : "User";
-    }
 
 
     private String getAvatar(String role) {
