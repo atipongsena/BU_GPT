@@ -24,14 +24,14 @@ import java.util.List;
 public class ChatHistoryView extends VerticalLayout {
 
     private final ChatHistoryService chatHistoryService;
-    private final UserService userService; // The userService should be final if it is going to be set only once in the constructor
+    private final UserService userService;
     private final Grid<ChatHistory> chatHistoryGrid;
 
 
     @Autowired
     public ChatHistoryView(ChatHistoryService chatHistoryService,UserService userService) {
         this.chatHistoryService = chatHistoryService;
-        this.userService = userService; // Set the userService using constructor injection
+        this.userService = userService;
         this.chatHistoryGrid = new Grid<>(ChatHistory.class, false);
 
         // Add columns to the grid
@@ -48,8 +48,6 @@ public class ChatHistoryView extends VerticalLayout {
             UI.getCurrent().navigate(ChatView.class);
         });
         backButton.getElement().setAttribute("theme", "tertiary");
-
-        // Add the back button at the top of the view
         add(backButton, chatHistoryGrid);
         setSizeFull();
         updateChatHistory();
@@ -61,8 +59,7 @@ public class ChatHistoryView extends VerticalLayout {
             List<ChatHistory> history = chatHistoryService.getChatHistoryForUser(currentUser.getUsername());
             chatHistoryGrid.setItems(history);
         } else {
-            // Handle the case where there is no user logged in
-            // Consider showing a message or redirecting to a login page
+
         }
     }
 

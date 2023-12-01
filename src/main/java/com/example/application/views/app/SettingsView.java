@@ -38,7 +38,6 @@ public class SettingsView extends VerticalLayout {
         passwordField.setPlaceholder("Enter new password");
 
         Button saveButton = new Button("Save", event -> {
-            // Perform validation if necessary
             if (fullNameField.isEmpty() || emailField.isEmpty() || passwordField.isEmpty()) {
                 Notification.show("Please fill in all fields.", 3000, Notification.Position.MIDDLE);
                 return;

@@ -75,13 +75,19 @@ public class ChatView extends AppLayout {
         chatHistoryGrid = new Grid<>(ChatHistory.class);
         chatHistoryGrid.setHeightFull();
 
+
         chat = new MessageList();
         input = new MessageInput();
         input.setWidth("100%");
         input.addSubmitListener(this::onSubmit);
 
+        // Buttons for chat history and clear chat
+        Button loadHistoryButton = new Button("Load History", event -> loadUserMessages());
+        Button clearChatButton = new Button("Clear Chat", event -> clearChat());
+        HorizontalLayout buttonLayout = new HorizontalLayout(loadHistoryButton, clearChatButton);
+
         // Layout for chat list and input
-        VerticalLayout chatLayout = new VerticalLayout(chat, input);
+        VerticalLayout chatLayout = new VerticalLayout(chat, input, buttonLayout);
         chatLayout.setHeightFull();
         chatLayout.setPadding(false);
         chatLayout.setSpacing(false);
@@ -90,10 +96,11 @@ public class ChatView extends AppLayout {
         // Combine layouts
         HorizontalLayout content = new HorizontalLayout(chatHistoryGrid, chatLayout);
         content.setFlexGrow(1, chatLayout);
-        content.setSizeFull(); // This sets the size of the content to full instead
+        content.setSizeFull();
         content.setPadding(false);
         content.setSpacing(false);
         setContent(content);
+
 
         // Apply to the main view
         addToNavbar(header);
@@ -113,7 +120,7 @@ public class ChatView extends AppLayout {
 
             openAI.sendAsync(message).whenComplete((messages, throwable) -> {
                 if (throwable != null) {
-                    throwable.printStackTrace(); // Consider better error handling
+                    throwable.printStackTrace();
                     return;
                 }
                 getUI().ifPresent(ui -> ui.access(() -> {
@@ -142,15 +149,6 @@ public class ChatView extends AppLayout {
     }
 
 
-
-    private void sendMessage(String messageText) {
-        if (messageText != null && !messageText.trim().isEmpty()) {
-            // Here you would add the logic to send the message and update the chat list
-        }
-    }
-
-
-
 //    @Override
 //    protected void onAttach(AttachEvent attachEvent) {
 //        super.onAttach(attachEvent);
@@ -158,38 +156,32 @@ public class ChatView extends AppLayout {
 //            loadUserMessages();
 //        }
 //    }
-//
-//    private void loadUserMessages() {
-//        User currentUser = userService.getCurrentUser();
-//        if (currentUser != null) {
-//            List<ChatHistory> messages = chatHistoryService.getChatHistoryForUser(currentUser.getUsername());
-//            messages.forEach(message -> {
-//                Instant messageInstant = message.getTimestamp().atZone(ZoneId.systemDefault()).toInstant();
-//                String displayName = message.getSenderId().equals(currentUser.getUsername()) ? currentUser.getUsername() : message.getSenderId();
-//                String avatarUrl = displayName.equals(currentUser.getUsername()) ? USER_AVATAR : AI_AVATAR; // Use the AI avatar for messages not sent by the current user
-//                MessageListItem item = new MessageListItem(
-//                        message.getMessage(),
-//                        messageInstant,
-//                        displayName,
-//                        avatarUrl
-//                );
-//                addMessageToList(item);
-//            });
-//        }
-//    }
+
+    private void loadUserMessages() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            List<ChatHistory> messages = chatHistoryService.getChatHistoryForUser(currentUser.getUsername());
+            messages.forEach(this::addMessageToList);
+        }
+    }
 
 
 
-    private void addMessageToList(MessageListItem messageItem) {
+    private void addMessageToList(ChatHistory message) {
+        User currentUser = userService.getCurrentUser();
+        Instant messageInstant = message.getTimestamp().atZone(ZoneId.systemDefault()).toInstant();
+        String displayName = message.getSenderId().equals(currentUser.getUsername()) ? currentUser.getUsername() : message.getSenderId();
+        String avatarUrl = displayName.equals(currentUser.getUsername()) ? USER_AVATAR : AI_AVATAR;
+
+        MessageListItem item = new MessageListItem(message.getMessage(), messageInstant, displayName, avatarUrl);
         List<MessageListItem> currentItems = new ArrayList<>(chat.getItems());
-        currentItems.add(messageItem);
+        currentItems.add(item);
         chat.setItems(currentItems);
     }
 
     private void updateChatWithResponse(List<OpenAI.Message> messages) {
         List<MessageListItem> newMessages = messages.stream()
                 .filter(msg -> "assistant".equals(msg.getRole()))
-                // Make sure to compare Instants with Instants
                 .filter(msg -> msg.getTime().isAfter(lastMessageTimestamp)) // Only add messages that are newer
                 .map(this::convertMessage)
                 .collect(Collectors.toList());
@@ -203,6 +195,9 @@ public class ChatView extends AppLayout {
         }
     }
 
+    private void clearChat() {
+        chat.setItems(new ArrayList<>());
+    }
 
     private void updateChatHistory() {
         User currentUser = userService.getCurrentUser();

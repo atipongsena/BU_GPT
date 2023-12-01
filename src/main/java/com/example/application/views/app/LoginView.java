@@ -29,15 +29,14 @@ public class LoginView extends VerticalLayout {
 
         TextField loginField = new TextField("Username or Email");
 
-        // Use PasswordField instead of TextField for password
         PasswordField passwordField = new PasswordField("Password");
-        passwordField.setRevealButtonVisible(true); // This allows the password to be shown or hidden
+        passwordField.setRevealButtonVisible(true);
 
         Button loginButton = new Button("Login");
         loginButton.addClickListener(event -> {
             boolean isAuthenticated = userService.authenticate(loginField.getValue(), passwordField.getValue());
             if (isAuthenticated) {
-                UI.getCurrent().navigate("gtp-chat"); // Navigate to ChatView
+                UI.getCurrent().navigate("gtp-chat");
             } else {
                 Notification.show("Login failed, please try again.", 3000, Position.MIDDLE);
             }
